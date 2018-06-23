@@ -18,14 +18,23 @@ echo
 echo
 
 session=$(op signin "$vault" "$email" "$secretkey" --output=raw)
-files=$(env "OP_SESSION_$vault=$session" op list documents | jq -rc '. | map(select(.overview.tags)) | map(select(any(.overview.tags[]; contains("sync")))) | .[]')
+files=$(env "OP_SESSION_$vault=$session" op list documents | jq -rc '. | map(select((.trashed == "N") and (.overview.tags) and any(.overview.tags[]; contains("sync")))) | .[]')
 
 while read -r file; do
   uuid=$(echo "$file" | jq -r '.uuid')
-  filename=$(echo "$file" | jq -r '.overview.title')
+  _filename=$(echo "$file" | jq -r '.overview.title')
+  filename=${_filename/#\~/$HOME}
+  tarred=$(echo "$file" | jq -r 'any(.overview.tags[]; contains("sync:tar"))')
 
   if [ ! -z "$uuid" ]; then
     echo "Restoring $filename"
-    env "OP_SESSION_$vault=$session" sh -c "op get document $uuid > $filename"
+
+    if [ "$tarred" == "true" ]; then
+      mkdir -p "$filename"
+      env "OP_SESSION_$vault=$session" sh -c "op get document $uuid | tar -xvz -C $filename"
+    else
+      mkdir -p "$(dirname "$filename")"
+      env "OP_SESSION_$vault=$session" sh -c "op get document $uuid > $filename"
+    fi
   fi
 done <<< "$files"
