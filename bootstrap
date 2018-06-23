@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+if [ ! -d "$HOME/.dotfiles" ]; then
+  echo 'Cloning dotfiles'
+  git clone https://github.com/jagregory/dotfiles.git "$HOME/.dotfiles"
+fi
+
+if ! hash brew >/dev/null 2>&1; then
+  echo Installing brew
+  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+fi
+
+if ! hash lsrc >/dev/null 2>&1; then
+  echo Installing rcm
+  brew tap thoughtbot/formulae
+  brew install rcm
+fi
+
+rcup
+
+if ! brew bundle --global check >/dev/null 2>&1; then
+  echo Brew bundle updating
+  brew bundle --global install
+fi
