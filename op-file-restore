@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -e
+
+vault="$1"
+email="$2"
+
+if [ -z "$vault" ] || [ -z "$email" ]; then
+  echo 'usage: op-file-restore <vault> <email>'
+  exit 1
+fi
+
+echo "Signing in to $vault 1Password vault"
+echo
+echo -n "Secret key: "
+read -s secretkey
+echo
+echo
+
+session=$(op signin "$vault" "$email" "$secretkey" --output=raw)
+files=$(env "OP_SESSION_$vault=$session" op list documents | jq -rc '. | map(select(.overview.tags)) | map(select(any(.overview.tags[]; contains("sync")))) | .[]')
+
+while read -r file; do
+  uuid=$(echo "$file" | jq -r '.uuid')
+  filename=$(echo "$file" | jq -r '.overview.title')
+
+  if [ ! -z "$uuid" ]; then
+    echo "Restoring $filename"
+    env "OP_SESSION_$vault=$session" sh -c "op get document $uuid > $filename"
+  fi
+done <<< "$files"
