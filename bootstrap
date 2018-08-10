@@ -30,9 +30,10 @@ if ! brew bundle --global check >/dev/null 2>&1; then
   brew bundle --global install
 fi
 
-echo Installing fish plugins
-fisher
-
 echo Installing op-file-restore
 curl -sL https://raw.githubusercontent.com/jagregory/devenv/master/op-file-restore > /usr/local/bin/op-file-restore
 chmod +x /usr/local/bin/op-file-restore
+
+echo Installing fish plugins
+fish -c 'fisher'
+
