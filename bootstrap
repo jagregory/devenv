@@ -4,7 +4,7 @@ set -e
 
 if ! hash brew >/dev/null 2>&1; then
   echo Installing brew
-  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
 if ! hash git >/dev/null 2>&1; then
@@ -30,10 +30,21 @@ if ! brew bundle --global check >/dev/null 2>&1; then
   brew bundle --global install
 fi
 
-echo Installing op-file-restore
-curl -sL https://raw.githubusercontent.com/jagregory/devenv/master/op-file-restore > /usr/local/bin/op-file-restore
-chmod +x /usr/local/bin/op-file-restore
+echo Installing fisherman
+fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
 
 echo Installing fish plugins
-fish -c 'fisher'
+fish -c 'fisher update'
 
+if [ ! -d "$HOME/.vim/bundle/Vundle.vim" ]; then
+  echo 'Installing nvim vundle'
+  git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+fi
+
+echo 'Installing nvim plugins'
+nvim +PluginInstall +qall
+
+echo Installing op-file-restore
+curl -sL https://raw.githubusercontent.com/jagregory/devenv/master/op-file-restore > /tmp/op-file-restore
+chmod +x /tmp/op-file-restore
+sudo mv /tmp/op-file-restore /usr/local/bin/

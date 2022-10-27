@@ -14,3 +14,7 @@ Restoring your secret files:
 ```sh
 op-file-restore <1password-vault> <email>
 ```
+
+## Manual tasks
+
+1. Point iTerm2 to the symlinked config file (Settings > General > Preferences)
