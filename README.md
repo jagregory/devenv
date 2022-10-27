@@ -9,10 +9,10 @@ Initial setup:
 curl -sL https://raw.githubusercontent.com/jagregory/devenv/master/bootstrap | sh -
 ```
 
-Restoring your secret files:
+Enable Biometric Signin for the 1Password CLI then restore your secret files:
 
 ```sh
-op-file-restore <1password-vault> <email>
+op-file-restore
 ```
 
 ## Manual tasks

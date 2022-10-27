@@ -2,39 +2,27 @@
 
 set -e
 
-vault="$1"
-email="$2"
+echo "Enable Biometric Unlock for CLI in 1Password before continuing"
 
-if [ -z "$vault" ] || [ -z "$email" ]; then
-  echo 'usage: op-file-restore <vault> <email>'
-  exit 1
-fi
+op signin
 
-echo "Signing in to $vault 1Password vault"
-echo
-echo -n "Secret key: "
-read -s secretkey
-echo
-echo
-
-session=$(op signin "$vault" "$email" "$secretkey" --output=raw)
-files=$(env "OP_SESSION_$vault=$session" op list documents | jq -rc '. | map(select((.trashed == "N") and (.overview.tags) and any(.overview.tags[]; contains("sync")))) | .[]')
+files=$(op document list --format json | jq -rc '. | map(select((.tags) and any(.tags[]; contains("sync")))) | .[]')
 
 while read -r file; do
-  uuid=$(echo "$file" | jq -r '.uuid')
-  _filename=$(echo "$file" | jq -r '.overview.title')
+  uuid=$(echo "$file" | jq -r '.id')
+  _filename=$(echo "$file" | jq -r '.title')
   filename=${_filename/#\~/$HOME}
-  tarred=$(echo "$file" | jq -r 'any(.overview.tags[]; contains("sync:tar"))')
+  tarred=$(echo "$file" | jq -r 'any(.tags[]; contains("sync:tar"))')
 
   if [ ! -z "$uuid" ]; then
     echo "Restoring $filename"
 
     if [ "$tarred" == "true" ]; then
       mkdir -p "$filename"
-      env "OP_SESSION_$vault=$session" sh -c "op get document $uuid | tar -xvz -C $filename"
+      op document get $uuid | tar -xvz -C $filename
     else
       mkdir -p "$(dirname "$filename")"
-      env "OP_SESSION_$vault=$session" sh -c "op get document $uuid > $filename"
+      op document get $uuid --output $filename
     fi
   fi
 done <<< "$files"
